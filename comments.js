@@ -1,27 +1,66 @@
-// Create a web server that listens on port 8080
-// When you navigate to http://localhost:8080/comments, it should return a list of comments in JSON format
-// The comments should be stored in a file called comments.json
-// The file should contain an array of objects
+// Create web server
+// http://localhost:3000/comments
+// http://localhost:3000/comments/1
+// http://localhost:3000/comments/2
+// http://localhost:3000/comments/3
 
-// Load the http module to create an http server.
-var http = require('http');
-var fs = require('fs');
+const express = require('express');
+const app = express();
+const path = require('path');
+const fs = require('fs');
 
-var server = http.createServer(function (request, response) {
-  fs.readFile('comments.json', 'utf8', function(err, data) {
+app.use(express.json());
+
+app.get('/comments', (req, res) => {
+  fs.readFile(path.join(__dirname, 'comments.json'), 'utf-8', (err, data) => {
     if (err) {
-      // Si hay un error leyendo el archivo, devuelve un error 500
-      response.writeHead(500, {'Content-Type': 'text/plain'});
-      response.end('Error interno del servidor');
+      res.status(500).send('Error reading file');
     } else {
-      // Asegúrate de que la respuesta solo se envía si el archivo se lee correctamente
-      response.writeHead(200, {'Content-Type': 'application/json'});
-      response.end(data);
+      res.send(data);
     }
   });
 });
 
-// No olvides completar la parte de escuchar en el puerto 8080
-server.listen(8080, function() {
-  console.log('Servidor ejecutándose en http://localhost:8080/');
+app.get('/comments/:id', (req, res) => {
+  fs.readFile(path.join(__dirname, 'comments.json'), 'utf-8', (err, data) => {
+    if (err) {
+      res.status(500).send('Error reading file');
+    } else {
+      const comments = JSON.parse(data);
+      const comment = comments.find((comment) => comment.id === parseInt(req.params.id));
+      if (comment) {
+        res.send(comment);
+      } else {
+        res.status(404).send('Comment not found');
+      }
+    }
+  });
 });
+
+app.post('/comments', (req, res) => {
+  fs.readFile(path.join(__dirname, 'comments.json'), 'utf-8', (err, data) => {
+    if (err) {
+      res.status(500).send('Error reading file');
+    } else {
+      const comments = JSON.parse(data);
+      const newComment = req.body;
+      newComment.id = comments.length + 1;
+      comments.push(newComment);
+      fs.writeFile(path.join(__dirname, 'comments.json'), JSON.stringify(comments), (err) => {
+        if (err) {
+          res.status(500).send('Error writing file');
+        } else {
+          res.status(201).send(newComment);
+        }
+      });
+    }
+  });
+});
+
+app.put('/comments/:id', (req, res) => {
+  fs.readFile(path.join(__dirname, 'comments.json'), 'utf-8', (err, data) => {
+    if (err) {
+      res.status(500).send('Error reading file');
+    } else {
+      const comments = JSON.parse(data);
+      const comment = comments.find((comment) => comment.id === parseInt(req.params
